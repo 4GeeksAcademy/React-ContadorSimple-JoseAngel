@@ -1,6 +1,4 @@
 import React from 'react'
-import ReactDOM from 'react-dom/client'
-
 
 // index.css'
 import '../styles/index.css'
@@ -12,14 +10,14 @@ let segundosTranscurriddos = 0
 let minutosTranscurridos = 0
 let horasTranscurridas = 0
 let diasTranscurridos = 0
-let Intervalo = null
+let intervalo = null
 const root = ReactDOM.createRoot(document.getElementById('root'));
 
-function iniciarRelog (){
-Intervalo = setInterval(()=>{
-    segundosTranscurriddos++
+function iniciarReloj (){
+intervalo = setInterval(()=>{
+    segundosTranscurridos++
 root.render(
-    <Contador dias={diasTranscurridos} horas= {horasTranscurridas} minutos={minutosTranscurridos} segundos= {segundosTranscurriddos} Parar = {pararIntervalo} Reanudar = {reanudarIntervalo}/>
+    <Contador dias={diasTranscurridos} horas= {horasTranscurridas} minutos={minutosTranscurridos} segundos= {segundosTranscurriddos} parar = {pararIntervalo} reanudar = {reanudarIntervalo}/>
 )
 
 if (segundosTranscurriddos === 60){
@@ -34,14 +32,16 @@ if (horasTranscurridas === 24){
     horasTranscurridas = 0
     diasTranscurridos++
 }
-},15)
+},1000)
 }
 
-iniciarRelog()
+iniciarReloj()
 function pararIntervalo () {
-    clearInterval(Intervalo);
+    clearInterval(intervalo);
 }
 
 function reanudarIntervalo () {
-    iniciarRelog()
+    if (intervalo === null){
+        iniciarReloj()
+    }
 }

@@ -1,5 +1,4 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client';
 
 
 function Contador(props) {
@@ -13,8 +12,8 @@ function Contador(props) {
         </h1>
 
         <div className='buttons'>
-            <button className='btn' onClick={props.Parar}>Parar el contador</button>
-            <button className='btn' onClick={props.Reanudar}>Reanudar el contador</button>
+            <button className='btn' onClick={props.parar}>Parar el contador</button>
+            <button className='btn' onClick={props.reanudar}>Reanudar el contador</button>
         </div>
 
     </div>

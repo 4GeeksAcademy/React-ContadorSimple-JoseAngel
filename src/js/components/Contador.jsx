@@ -3,137 +3,173 @@ import React from 'react';
 /**
  * Contador Component
  * 
- * Auto-incrementing counter that updates every second.
- * Demonstrates manual state management with setInterval and clearInterval.
+ * 📝 IMPORTANTE: Estado manual (FUERA de React)
  * 
- * Key concepts:
- * 1. setInterval - Executes code at regular intervals
- * 2. clearInterval - Stops the interval to prevent memory leaks
- * 3. String.padStart - Formats numbers with leading zeros (6 digits)
- * 4. Event handling - Stop/Resume and Reset functionality
+ * Este componente demuestra la forma ORIGINAL de manejar estado en React,
+ * ANTES de que existieran hooks (useState, useEffect).
  * 
- * @component
+ * Conceptos pedagógicos:
+ * 1. Estado en variables JavaScript simples (no en React state)
+ * 2. Necesidad de re-renderizar manualmente
+ * 3. Importancia de limpiar setInterval
+ * 4. Por qué React state es mejor que esto
+ * 
+ * ESTA ES LA FORMA MÁS PURA DE ENTENDER EL PROBLEMA
+ * que React soluciona con hooks.
  */
-class Contador extends React.Component {
-    constructor(props) {
-        super(props);
-        // State management - demonstrating React's original state pattern
-        this.state = {
-            count: 0,
-            isRunning: true,
-            intervalId: null
-        };
-    }
 
-    componentDidMount() {
-        // Start the auto-incrementing counter when component mounts
-        this.startCounter();
-    }
+// 📝 ESTADO MANUAL - Variables fuera del componente
+// Este es el patrón ORIGINAL de React (pre-hooks era así)
+let count = 0;
+let isRunning = false;
+let intervalId = null;
 
-    componentWillUnmount() {
-        // Clean up: Stop the interval when component unmounts
-        // This prevents memory leaks
-        if (this.state.intervalId) {
-            clearInterval(this.state.intervalId);
-        }
-    }
+// Referencia al root para re-renderizar manualmente
+let renderCallback = null;
 
-    startCounter = () => {
-        // Start the interval - increments counter every 1000ms (1 second)
-        const intervalId = setInterval(() => {
-            this.setState((prevState) => ({
-                count: prevState.count + 1
-            }));
+/**
+ * Función para re-renderizar el componente
+ * (En React antiguo, esto se hacía manualmente)
+ */
+const triggerRender = () => {
+    if (renderCallback) {
+        renderCallback();
+    }
+};
+
+/**
+ * Formatea el número con 6 dígitos y ceros a la izquierda
+ * @param {number} num - Número a formatear
+ * @returns {string} - Número formateado (ej: "000042")
+ */
+const formatCounter = (num) => {
+    return String(num).padStart(6, '0');
+};
+
+/**
+ * Inicia el contador automático
+ * Incrementa cada 1000ms (1 segundo)
+ */
+const startCounter = () => {
+    if (!isRunning) {
+        isRunning = true;
+        
+        // 📝 setInterval ejecuta código cada 1 segundo
+        intervalId = setInterval(() => {
+            count++;  // Incrementa el estado manual
+            triggerRender();  // Re-renderiza manualmente
         }, 1000);
         
-        this.setState({ intervalId, isRunning: true });
+        triggerRender();
     }
+};
 
-    stopCounter = () => {
-        // Stop the interval
-        if (this.state.intervalId) {
-            clearInterval(this.state.intervalId);
-            this.setState({ isRunning: false });
+/**
+ * Detiene el contador
+ * CRÍTICO: Limpia el interval para prevenir memory leaks
+ */
+const stopCounter = () => {
+    if (isRunning) {
+        isRunning = false;
+        
+        // 📝 clearInterval DETIENE la ejecución del setInterval
+        // SIN ESTO = memory leak (el interval sigue corriendo en background)
+        if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
         }
+        
+        triggerRender();
     }
+};
 
-    resumeCounter = () => {
-        // Resume the interval if it was stopped
-        if (!this.state.isRunning) {
-            this.startCounter();
-        }
+/**
+ * Reinicia el contador a 0
+ */
+const resetCounter = () => {
+    stopCounter();
+    count = 0;
+    triggerRender();
+};
+
+/**
+ * Toggle: Si está corriendo, pausa. Si está pausado, reanuda.
+ */
+const toggleCounter = () => {
+    if (isRunning) {
+        stopCounter();
+    } else {
+        startCounter();
     }
+};
 
-    toggleCounter = () => {
-        // Toggle between stop and resume
-        if (this.state.isRunning) {
-            this.stopCounter();
-        } else {
-            this.resumeCounter();
-        }
-    }
+/**
+ * Componente Contador
+ * 
+ * Nota: Este es un componente funcional PURO.
+ * No tiene estado interno de React.
+ * El estado está en variables globales arriba.
+ */
+function Contador() {
+    // Guardar referencia al render para actualizaciones manuales
+    React.useLayoutEffect(() => {
+        renderCallback = () => {};  // Placeholder para trigger renders
+        
+        // Limpiar cuando el componente se desmonta
+        return () => {
+            stopCounter();  // Asegurar que se limpia el interval
+            renderCallback = null;
+        };
+    }, []);
 
-    resetCounter = () => {
-        // Reset the counter to 0
-        this.stopCounter();
-        this.setState({ count: 0 });
-        setTimeout(() => this.startCounter(), 100);
-    }
+    const formattedCount = formatCounter(count);
+    const buttonText = isRunning ? 'Pausar' : 'Reanudar';
+    const statusText = isRunning ? 'En ejecución' : 'Pausado';
+    const statusClass = isRunning ? 'running' : 'paused';
 
-    // Format the counter with 6 digits and leading zeros
-    // Example: 1 → "000001", 42 → "000042", 1234 → "001234"
-    formatCounter = (num) => {
-        return String(num).padStart(6, '0');
-    }
+    return (
+        <div className="container-counter">
+            <div className="counter-wrapper">
+                {/* Título con icono de reloj */}
+                <h1 className="counter-title">
+                    <i className="fas fa-clock"></i> Simple Counter
+                </h1>
 
-    render() {
-        const { count, isRunning } = this.state;
-        const formattedCount = this.formatCounter(count);
+                {/* Display del contador con 6 dígitos */}
+                <div className="hora">
+                    {formattedCount}
+                </div>
 
-        return (
-            <div className="container-counter">
-                <div className="counter-wrapper">
-                    {/* Header */}
-                    <h1 className="counter-title">
-                        <i className="fas fa-clock"></i> Simple Counter
-                    </h1>
+                {/* Botones de control */}
+                <div className="buttons">
+                    <button
+                        className="btn btn-stop"
+                        onClick={toggleCounter}
+                        title={isRunning ? "Pausar contador" : "Reanudar contador"}
+                    >
+                        <i className={`fas ${isRunning ? 'fa-pause' : 'fa-play'}`}></i>
+                        {buttonText}
+                    </button>
 
-                    {/* Display with 6-digit formatting */}
-                    <div className="hora">
-                        {formattedCount}
-                    </div>
+                    <button
+                        className="btn btn-reset"
+                        onClick={resetCounter}
+                        title="Reiniciar contador a 0"
+                    >
+                        <i className="fas fa-redo"></i> Resetear
+                    </button>
+                </div>
 
-                    {/* Control Buttons */}
-                    <div className="buttons">
-                        <button 
-                            className="btn btn-stop"
-                            onClick={this.toggleCounter}
-                            title={isRunning ? "Pausar contador" : "Reanudar contador"}
-                        >
-                            <i className={`fas ${isRunning ? 'fa-pause' : 'fa-play'}`}></i>
-                            {isRunning ? 'Pausar' : 'Reanudar'}
-                        </button>
-
-                        <button 
-                            className="btn btn-reset"
-                            onClick={this.resetCounter}
-                            title="Reiniciar contador a 0"
-                        >
-                            <i className="fas fa-redo"></i> Resetear
-                        </button>
-                    </div>
-
-                    {/* Status indicator */}
-                    <div className="status-indicator">
-                        <span className={`status-dot ${isRunning ? 'running' : 'paused'}`}></span>
-                        <span className="status-text">
-                            {isRunning ? 'En ejecución' : 'Pausado'}
-                        </span>
-                    </div>
+                {/* Indicador de estado */}
+                <div className="status-indicator">
+                    <span className={`status-dot ${statusClass}`}></span>
+                    <span className="status-text">
+                        {statusText}
+                    </span>
                 </div>
             </div>
-        );
-    }
+        </div>
+    );
 }
 
 export default Contador;
